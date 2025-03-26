@@ -1,0 +1,10 @@
+# depslib dependency file v1.0
+1743001171 source:c:\users\dancho\c++ tu-sofia\tu-project ssp\main.cpp
+	<iostream>
+	<vector>
+	<string>
+	<map>
+	<thread>
+	<mutex>
+	<cctype>
+
