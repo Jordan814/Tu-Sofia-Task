@@ -14,7 +14,7 @@ const int UNDO_LIMIT = 10;
 mutex mtx;
 string sharedText;
 
-// Създаване на речник за латинско-кирилски букви
+
 map<char, char> latinToCyrillic = {
     {'A', 'А'}, {'B', 'Б'}, {'C', 'Ц'}, {'D', 'Д'}, {'E', 'Е'}, {'F', 'Ф'},
     {'G', 'Г'}, {'H', 'Х'}, {'I', 'И'}, {'J', 'Ј'}, {'K', 'К'}, {'L', 'Л'},
@@ -27,11 +27,9 @@ map<char, char> latinToCyrillic = {
     {'w', 'ш'}, {'x', 'ж'}, {'y', 'и'}, {'z', 'з'}
 };
 
-
 string convertToCyrillic(const string& text) {
     string result;
     for (char ch : text) {
-
         if (latinToCyrillic.find(ch) != latinToCyrillic.end()) {
             result += latinToCyrillic[ch];
         } else {
@@ -40,7 +38,6 @@ string convertToCyrillic(const string& text) {
     }
     return result;
 }
-
 
 string fixCapitalization(string text) {
     bool capitalizeNext = true;
@@ -56,7 +53,6 @@ string fixCapitalization(string text) {
     return text;
 }
 
-
 void addToUndo(const string& text) {
     lock_guard<mutex> lock(mtx);
     if (undoStack.size() == UNDO_LIMIT) {
@@ -65,14 +61,12 @@ void addToUndo(const string& text) {
     undoStack.push_back(text);
 }
 
-
 void processText() {
     lock_guard<mutex> lock(mtx);
     sharedText = convertToCyrillic(sharedText);
     sharedText = fixCapitalization(sharedText);
     addToUndo(sharedText);
 }
-
 
 void writeTextToFile() {
     lock_guard<mutex> lock(mtx);
@@ -85,6 +79,17 @@ void writeTextToFile() {
     outFile.close();
 }
 
+void writeInputOutputToFile(const string& inputText) {
+    lock_guard<mutex> lock(mtx);
+    ofstream ioFile("input_output.txt");
+    if (!ioFile) {
+        cerr << "Грешка при отваряне на файла!" << endl;
+        return;
+    }
+    ioFile << "Входен текст: " << inputText << "\n";
+    ioFile << "Коригиран текст: " << sharedText << "\n";
+    ioFile.close();
+}
 
 void displayText() {
     lock_guard<mutex> lock(mtx);
@@ -93,24 +98,24 @@ void displayText() {
 
 int main() {
     cout << "Въведете текст: ";
-    getline(cin, sharedText);
+    string inputText;
+    getline(cin, inputText);
 
+    sharedText = inputText;
     addToUndo(sharedText);
 
-
     thread t1(processText);
-
     t1.join();
 
-
     thread t2(writeTextToFile);
-
     t2.join();
 
-
-    thread t3(displayText);
-
+    thread t3(writeInputOutputToFile, inputText);
     t3.join();
+
+    thread t4(displayText);
+    t4.join();
 
     return 0;
 }
+
